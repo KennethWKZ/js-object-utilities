@@ -4,7 +4,7 @@ export = <T>(object: GeneralObject<T>, key: string, value: any): GeneralObject<T
 	const keyParts = key.split(".");
 
 	// Protect against prototype pollution
-	if (keyParts.includes("__proto__") || keyParts.includes("constructor")) {
+	if (keyParts.includes("__proto__") || keyParts.includes("constructor") || keyParts.includes("prototype")) {
 		// If the key is __proto__ or constructor, return the object and do nothing since this is a security risk.
 		return object;
 	}

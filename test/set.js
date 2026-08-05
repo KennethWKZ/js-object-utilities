@@ -40,7 +40,15 @@ describe("utils.set", () => {
 			"output": {"data": [{"hello": "world"}]}
 		},
 		{
+			"input": [{}, "__proto__.toString", "Hello"],
+			"output": {}
+		},
+		{
 			"input": [{}, "__proto__", "Hello"],
+			"output": {}
+		},
+		{
+			"input": [{}, "prototype", "Hello"],
 			"output": {}
 		},
 		{

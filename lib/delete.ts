@@ -4,6 +4,12 @@ export = <T>(object: GeneralObjectOrValue<T>, keys: string | number | string[] |
 	(Array.isArray(keys) ? keys : [keys]).forEach((key) => {
 		const keyParts: string[] = (typeof key === "number" ? `${key}` : key).split(".");
 
+		// Block prototype keys before any traversal can reach Object.prototype.
+		if (keyParts.includes("__proto__") || keyParts.includes("constructor") || keyParts.includes("prototype")) {
+			// If the key is __proto__ or constructor, return the object and do nothing since this is a security risk.
+			return;
+		}
+
 		if (keyParts.length === 1) {
 			if (Array.isArray(object)) {
 				object.splice(parseInt(keyParts[0]), 1);

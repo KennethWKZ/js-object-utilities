@@ -6,6 +6,13 @@ describe("utils.delete", () => {
 		expect(utils.delete).to.be.a("function");
 	});
 
+	it("Should leave Object.prototype alone for prototype keys", () => {
+		const originalToString = Object.prototype.toString;
+		const result = utils.delete({}, "__proto__.toString");
+		expect(result).to.eql({});
+		expect(Object.prototype.toString).to.equal(originalToString);
+	});
+
 	const tests = [
 		{
 			"input": [{}, "hello"],
@@ -58,6 +65,22 @@ describe("utils.delete", () => {
 		{
 			"input": [{"hello": "world", "test": {"data1": "first", "data2": "item"}}, ["hello", "test.data1"]],
 			"output": {"test": {"data2": "item"}}
+		},
+		{
+			"input": [{}, "__proto__.toString"],
+			"output": {}
+		},
+		{
+			"input": [{}, "__proto__"],
+			"output": {}
+		},
+		{
+			"input": [{}, "prototype", "Hello"],
+			"output": {}
+		},
+		{
+			"input": [{}, "constructor", "Hello"],
+			"output": {}
 		}
 	];
 
