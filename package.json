@@ -1,6 +1,6 @@
 {
   "name": "js-object-utilities",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "JavaScript utilities for nested objects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
