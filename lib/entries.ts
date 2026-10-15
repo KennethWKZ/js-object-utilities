@@ -7,7 +7,8 @@ const main = <T>(object: GeneralObjectOrValue<T>, existingKey = ""): [string, Ge
 		const keyWithExisting = `${existingKey ? `${existingKey}.` : ""}${key}`;
 		accumulator.push([keyWithExisting, value]);
 
-		if (typeof value === "object" && !(value instanceof Buffer) && value !== null && !isCircular(value, keyWithExisting)) {
+		// Binary values (`Buffer` is a `Uint8Array`) are leaves: descending would add an entry per byte, and a large one overflows the stack.
+		if (typeof value === "object" && !(value instanceof Uint8Array) && value !== null && !isCircular(value, keyWithExisting)) {
 			accumulator.push(...main(value, keyWithExisting));
 		}
 

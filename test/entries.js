@@ -46,4 +46,25 @@ describe("utils.entries", () => {
 			expect(utils.entries(test.input)).to.eql(test.output);
 		});
 	});
+	describe("Binary values", () => {
+		it("Should not descend into a Buffer", () => {
+			const content = Buffer.from("abc");
+			expect(utils.entries({content})).to.eql([["content", content]]);
+		});
+
+		it("Should not descend into a Uint8Array", () => {
+			const content = new Uint8Array([1, 2, 3]);
+			expect(utils.entries({content})).to.eql([["content", content]]);
+		});
+
+		it("Should not descend into a nested Uint8Array", () => {
+			const content = new Uint8Array([1]);
+			expect(utils.entries({"file": {content}})).to.eql([["file", {content}], ["file.content", content]]);
+		});
+
+		it("Should not throw for a large Uint8Array", () => {
+			const content = new Uint8Array(400000);
+			expect(utils.entries({content})).to.eql([["content", content]]);
+		});
+	});
 });
