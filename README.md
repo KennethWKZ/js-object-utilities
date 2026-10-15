@@ -2,11 +2,19 @@
 
 This package has a bunch of helper methods to work with nested objects in JavaScript.
 
+This is a fork of [rrainn/js-object-utilities](https://github.com/rrainn/js-object-utilities), published as `@kennethwkz/js-object-utilities`. Changes from 2.2.2:
+
+- `entries` detects cycles in linear time, by tracking the objects on the current path, instead of walking each value's subtree. An array that contains itself no longer overflows the stack.
+- `entries` treats `Uint8Array` values (and so `Buffer`) as leaves. A large binary value no longer overflows the stack.
+- `equals` compares nested values deeply in one walk: binary values by bytes, dates by time, sets and maps by contents, and arrays only equal arrays. Before, any nested object counted as equal.
+
 ## Install
 
 ```
-npm i js-object-utilities
+npm i js-object-utilities@npm:@kennethwkz/js-object-utilities
 ```
+
+The alias keeps the package name `js-object-utilities`, so `require("js-object-utilities")` works unchanged.
 
 ## API
 

@@ -1,6 +1,6 @@
 {
-  "name": "js-object-utilities",
-  "version": "2.2.2",
+  "name": "@kennethwkz/js-object-utilities",
+  "version": "2.3.0",
   "description": "JavaScript utilities for nested objects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rrainn/js-object-utilities.git"
+    "url": "git+https://github.com/KennethWKZ/js-object-utilities.git"
   },
   "keywords": [
     "object",
@@ -40,10 +40,13 @@
   "author": "rrainn, Inc.",
   "license": "UNLICENSE",
   "bugs": {
-    "url": "https://github.com/rrainn/js-object-utilities/issues"
+    "url": "https://github.com/KennethWKZ/js-object-utilities/issues"
   },
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/rrainn/js-object-utilities#readme"
+  "homepage": "https://github.com/KennethWKZ/js-object-utilities#readme",
+  "publishConfig": {
+    "access": "public"
+  }
 }
