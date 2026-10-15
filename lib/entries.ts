@@ -8,7 +8,8 @@ const main = <T>(object: GeneralObjectOrValue<T>, existingKey: string, ancestors
 		const keyWithExisting = `${existingKey ? `${existingKey}.` : ""}${key}`;
 		accumulator.push([keyWithExisting, value]);
 
-		if (typeof value === "object" && !(value instanceof Buffer) && value !== null && !ancestors.has(value)) {
+		// Binary values (`Buffer` is a `Uint8Array`) are leaves: descending would add an entry per byte, and a large one overflows the stack.
+		if (typeof value === "object" && !(value instanceof Uint8Array) && value !== null && !ancestors.has(value)) {
 			main(value, keyWithExisting, ancestors).forEach((entry) => accumulator.push(entry));
 		}
 	});
