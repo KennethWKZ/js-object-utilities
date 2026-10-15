@@ -1,31 +1,51 @@
-import entries = require("./entries");
-
-// `entries` treats binary values (`Buffer` is a `Uint8Array`) as leaves, so they are compared here by length and bytes.
-const binaryEquals = (a: any, b: any): boolean => {
-	return a instanceof Uint8Array && b instanceof Uint8Array && a.length === b.length && a.every((byte, index) => byte === b[index]);
+// Compares two values deeply in one walk. Binary values (`Buffer` is a `Uint8Array`) compare by bytes, dates by time, sets and maps by their contents, and arrays only equal arrays.
+const main = (a: any, b: any, seen: Map<any, any>): boolean => {
+	if (a === b) {
+		return true;
+	}
+	if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) {
+		// NaN is the only value that isn't equal to itself.
+		return typeof a === "number" && typeof b === "number" && Number.isNaN(a) && Number.isNaN(b);
+	}
+	// `seen` pairs the objects on the current comparison path, so a cycle counts as equal instead of recursing forever.
+	if (seen.get(a) === b) {
+		return true;
+	}
+	const previous = seen.get(a);
+	seen.set(a, b);
+	const result = compareObjects(a, b, seen);
+	// Drop the pair on the way back up: a pair from a comparison that failed inside a Set must not count as equal for the next Set element.
+	if (previous === undefined) {
+		seen.delete(a);
+	} else {
+		seen.set(a, previous);
+	}
+	return result;
 };
 
-export = (a: any, b: any): boolean => {
+const compareObjects = (a: any, b: any, seen: Map<any, any>): boolean => {
 	if (a instanceof Uint8Array || b instanceof Uint8Array) {
-		return binaryEquals(a, b);
+		return a instanceof Uint8Array && b instanceof Uint8Array && a.length === b.length && a.every((byte, index) => byte === b[index]);
 	}
-	if (typeof a !== "object" || typeof b !== "object") {
-		return a === b;
+	if (a instanceof Date || b instanceof Date) {
+		return a instanceof Date && b instanceof Date && a.getTime() === b.getTime();
 	}
-
-	const aEntries = entries(a);
-	const bEntries = entries(b);
-	const bEntriesMap = bEntries.reduce((res, value) => {
-		const [key, val] = value;
-		res[key] = val;
-		return res;
-	}, {});
-
-	return aEntries.length === bEntries.length && aEntries.every((entry) => {
-		const bValue = bEntriesMap[entry[0]];
-		if (entry[1] instanceof Uint8Array || bValue instanceof Uint8Array) {
-			return binaryEquals(entry[1], bValue);
+	if (a instanceof Set || b instanceof Set) {
+		if (!(a instanceof Set && b instanceof Set) || a.size !== b.size) {
+			return false;
 		}
-		return typeof entry[1] === "object" || bValue === entry[1];
-	});
+		const bValues = [...b];
+		return [...a].every((value) => b.has(value) || bValues.some((bValue) => main(value, bValue, seen)));
+	}
+	if (a instanceof Map || b instanceof Map) {
+		return a instanceof Map && b instanceof Map && a.size === b.size && [...a].every(([key, value]) => b.has(key) && main(value, b.get(key), seen));
+	}
+	if (Array.isArray(a) !== Array.isArray(b)) {
+		return false;
+	}
+
+	const aKeys = Object.keys(a);
+	return aKeys.length === Object.keys(b).length && aKeys.every((key) => Object.prototype.hasOwnProperty.call(b, key) && main(a[key], b[key], seen));
 };
+
+export = (a: any, b: any): boolean => main(a, b, new Map());
