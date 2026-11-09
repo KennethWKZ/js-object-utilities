@@ -9,6 +9,7 @@
     "build": "tsc",
     "build:clean": "rimraf dist",
     "build:watch": "npm run build -- -w",
+    "test:types": "tsc --noEmit",
     "test:nocoverage": "mocha",
     "test": "nyc npm run test:nocoverage",
     "test:debug": "npm run test:nocoverage -- --no-timeout --inspect=9229",
