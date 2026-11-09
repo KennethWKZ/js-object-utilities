@@ -23,6 +23,8 @@
     "@typescript-eslint/parser": "^4.7.0",
     "chai": "^4.2.0",
     "eslint": "^7.13.0",
+    "istanbul-lib-report": "3.0.0",
+    "istanbul-lib-source-maps": "4.0.0",
     "mocha": "^7.2.0",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
