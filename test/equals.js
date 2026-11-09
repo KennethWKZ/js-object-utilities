@@ -114,5 +114,15 @@ describe("utils.equals", () => {
 			b.self = b;
 			expect(utils.equals(a, b)).to.eql(true);
 		});
+
+		it("Should not reuse a pair from a failed Set element comparison", () => {
+			const one = {"v": 1};
+			const two = {"v": 2};
+			const shared = {"n": two, "z": 9};
+			// Comparing `{"n": one, "z": 0}` with `shared` fails, and must not leave `one` and `two` recorded as equal for the next element.
+			const a = new Set([shared, {"n": one, "z": 0}]);
+			const b = new Set([shared, {"n": two, "z": 0}]);
+			expect(utils.equals(a, b)).to.eql(false);
+		});
 	});
 });

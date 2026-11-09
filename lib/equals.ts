@@ -1,4 +1,4 @@
-// Compares two values deeply in one walk. Binary values (`Buffer` is a `Uint8Array`) compare by bytes, dates by time, sets and maps by their contents, and arrays only equal arrays. `seen` pairs the objects already being compared, so a cycle doesn't recurse forever.
+// Compares two values deeply in one walk. Binary values (`Buffer` is a `Uint8Array`) compare by bytes, dates by time, sets and maps by their contents, and arrays only equal arrays.
 const main = (a: any, b: any, seen: Map<any, any>): boolean => {
 	if (a === b) {
 		return true;
@@ -7,11 +7,23 @@ const main = (a: any, b: any, seen: Map<any, any>): boolean => {
 		// NaN is the only value that isn't equal to itself.
 		return typeof a === "number" && typeof b === "number" && Number.isNaN(a) && Number.isNaN(b);
 	}
+	// `seen` pairs the objects on the current comparison path, so a cycle counts as equal instead of recursing forever.
 	if (seen.get(a) === b) {
 		return true;
 	}
+	const previous = seen.get(a);
 	seen.set(a, b);
+	const result = compareObjects(a, b, seen);
+	// Drop the pair on the way back up: a pair from a comparison that failed inside a Set must not count as equal for the next Set element.
+	if (previous === undefined) {
+		seen.delete(a);
+	} else {
+		seen.set(a, previous);
+	}
+	return result;
+};
 
+const compareObjects = (a: any, b: any, seen: Map<any, any>): boolean => {
 	if (a instanceof Uint8Array || b instanceof Uint8Array) {
 		return a instanceof Uint8Array && b instanceof Uint8Array && a.length === b.length && a.every((byte, index) => byte === b[index]);
 	}
