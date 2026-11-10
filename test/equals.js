@@ -124,5 +124,32 @@ describe("utils.equals", () => {
 			const b = new Set([shared, {"n": two, "z": 0}]);
 			expect(utils.equals(a, b)).to.eql(false);
 		});
+
+		it("Should compare a self cycle with a two object cycle in both orders", () => {
+			const a = {};
+			a.next = a;
+			const b = {};
+			const c = {};
+			b.next = c;
+			c.next = b;
+			expect(utils.equals(a, b)).to.eql(true);
+			expect(utils.equals(b, a)).to.eql(true);
+		});
+
+		it("Should not match two Set elements to the same element of the other Set", () => {
+			expect(utils.equals(new Set([{"v": 1}, {"v": 1}]), new Set([{"v": 1}, {"v": 2}]))).to.eql(false);
+			expect(utils.equals(new Set([{"v": 1}, {"v": 2}]), new Set([{"v": 1}, {"v": 1}]))).to.eql(false);
+		});
+
+		it("Should not match a Set element to an element the other Set shares with it", () => {
+			const shared = {"v": 1};
+			expect(utils.equals(new Set([{"v": 1}, shared]), new Set([shared, {"v": 2}]))).to.eql(false);
+			expect(utils.equals(new Set([shared, {"v": 1}]), new Set([shared, {"v": 2}]))).to.eql(false);
+		});
+
+		it("Should match Set elements that are equal in a different order", () => {
+			const shared = {"v": 3};
+			expect(utils.equals(new Set([{"v": 1}, shared, {"v": 2}]), new Set([{"v": 2}, {"v": 1}, shared]))).to.eql(true);
+		});
 	});
 });
