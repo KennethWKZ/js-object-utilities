@@ -1,5 +1,5 @@
 // Compares two values deeply in one walk. Binary values (`Buffer` is a `Uint8Array`) compare by bytes, dates by time, sets and maps by their contents, and arrays only equal arrays.
-const main = (a: any, b: any, seen: Map<any, any>): boolean => {
+const main = (a: any, b: any, seen: Map<any, Set<any>>): boolean => {
 	if (a === b) {
 		return true;
 	}
@@ -7,23 +7,26 @@ const main = (a: any, b: any, seen: Map<any, any>): boolean => {
 		// NaN is the only value that isn't equal to itself.
 		return typeof a === "number" && typeof b === "number" && Number.isNaN(a) && Number.isNaN(b);
 	}
-	// `seen` pairs the objects on the current comparison path, so a cycle counts as equal instead of recursing forever.
-	if (seen.get(a) === b) {
+	// `seen` holds every pair on the current comparison path (one object can be paired with several others at once), so a cycle counts as equal instead of recursing forever.
+	let partners = seen.get(a);
+	if (partners && partners.has(b)) {
 		return true;
 	}
-	const previous = seen.get(a);
-	seen.set(a, b);
+	if (!partners) {
+		partners = new Set();
+		seen.set(a, partners);
+	}
+	partners.add(b);
 	const result = compareObjects(a, b, seen);
 	// Drop the pair on the way back up: a pair from a comparison that failed inside a Set must not count as equal for the next Set element.
-	if (previous === undefined) {
+	partners.delete(b);
+	if (partners.size === 0) {
 		seen.delete(a);
-	} else {
-		seen.set(a, previous);
 	}
 	return result;
 };
 
-const compareObjects = (a: any, b: any, seen: Map<any, any>): boolean => {
+const compareObjects = (a: any, b: any, seen: Map<any, Set<any>>): boolean => {
 	if (a instanceof Uint8Array || b instanceof Uint8Array) {
 		return a instanceof Uint8Array && b instanceof Uint8Array && a.length === b.length && a.every((byte, index) => byte === b[index]);
 	}
@@ -34,8 +37,19 @@ const compareObjects = (a: any, b: any, seen: Map<any, any>): boolean => {
 		if (!(a instanceof Set && b instanceof Set) || a.size !== b.size) {
 			return false;
 		}
-		const bValues = [...b];
-		return [...a].every((value) => b.has(value) || bValues.some((bValue) => main(value, bValue, seen)));
+		// An element both Sets hold matches itself. Each other element must match its own element of `b`, so a matched element is removed and can't match a second one.
+		const unmatched = [...b].filter((bValue) => !a.has(bValue));
+		return [...a].every((value) => {
+			if (b.has(value)) {
+				return true;
+			}
+			const index = unmatched.findIndex((bValue) => main(value, bValue, seen));
+			if (index === -1) {
+				return false;
+			}
+			unmatched.splice(index, 1);
+			return true;
+		});
 	}
 	if (a instanceof Map || b instanceof Map) {
 		return a instanceof Map && b instanceof Map && a.size === b.size && [...a].every(([key, value]) => b.has(key) && main(value, b.get(key), seen));
