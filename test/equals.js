@@ -102,6 +102,8 @@ describe("utils.equals", () => {
 	});
 
 	describe("Values that aren't plain objects", () => {
+		// Builds an array of `length` with only `values` set, so the other indexes are holes.
+		const sparse = (length, values) => Object.assign(new Array(length), values);
 		const cases = [
 			["null and null", null, null, true],
 			["null and an object", null, {}, false],
@@ -125,7 +127,17 @@ describe("utils.equals", () => {
 			["Sets of different sizes", new Set(["a"]), new Set(["a", "b"]), false],
 			["a Set and an array", new Set(["a"]), ["a"], false],
 			["equal Maps", new Map([["a", {"b": 1}]]), new Map([["a", {"b": 1}]]), true],
-			["different Maps", new Map([["a", 1]]), new Map([["a", 2]]), false]
+			["different Maps", new Map([["a", 1]]), new Map([["a", 2]]), false],
+			["Maps with equal object keys", new Map([[{"id": 1}, "x"]]), new Map([[{"id": 1}, "x"]]), true],
+			["Maps with different object keys", new Map([[{"id": 1}, "x"]]), new Map([[{"id": 2}, "x"]]), false],
+			["Maps with equal object keys and different values", new Map([[{"id": 1}, "x"]]), new Map([[{"id": 1}, "y"]]), false],
+			["Maps with equal object keys holding swapped values", new Map([[{"id": 1}, "x"], [{"id": 1}, "y"]]), new Map([[{"id": 1}, "y"], [{"id": 1}, "x"]]), true],
+			["Maps of different sizes", new Map([["a", 1]]), new Map([["a", 1], ["b", 2]]), false],
+			["a Map and an object", new Map([["a", 1]]), {"a": 1}, false],
+			["an array and the same array with a trailing hole", [1], sparse(2, {"0": 1}), false],
+			["an array with a trailing hole and the same array", sparse(2, {"0": 1}), [1], false],
+			["arrays with the same holes", sparse(3, {"0": 1, "2": 3}), sparse(3, {"0": 1, "2": 3}), true],
+			["an array with a hole and one with undefined there", sparse(3, {"0": 1, "2": 3}), [1, undefined, 3], false]
 		];
 		cases.forEach(([label, a, b, output]) => {
 			it(`Should return ${output} for ${label}`, () => {
@@ -149,6 +161,28 @@ describe("utils.equals", () => {
 			const a = new Set([shared, {"n": one, "z": 0}]);
 			const b = new Set([shared, {"n": two, "z": 0}]);
 			expect(utils.equals(a, b)).to.eql(false);
+		});
+
+		it("Should compare Maps that use themselves as a key", () => {
+			const a = new Map();
+			a.set(a, 1);
+			const b = new Map();
+			b.set(b, 1);
+			expect(utils.equals(a, b)).to.eql(true);
+			const c = new Map();
+			c.set(c, 2);
+			expect(utils.equals(a, c)).to.eql(false);
+		});
+
+		it("Should not match two Map entries to the same entry of the other Map", () => {
+			expect(utils.equals(new Map([[{"id": 1}, "x"], [{"id": 1}, "x"]]), new Map([[{"id": 1}, "x"], [{"id": 2}, "x"]]))).to.eql(false);
+			expect(utils.equals(new Map([[{"id": 1}, "x"], [{"id": 2}, "x"]]), new Map([[{"id": 1}, "x"], [{"id": 1}, "x"]]))).to.eql(false);
+		});
+
+		it("Should match a shared Map key with an equal key when its own values differ", () => {
+			const shared = {"id": 1};
+			expect(utils.equals(new Map([[shared, "x"], [{"id": 1}, "y"]]), new Map([[shared, "y"], [{"id": 1}, "x"]]))).to.eql(true);
+			expect(utils.equals(new Map([[shared, "x"], [{"id": 1}, "y"]]), new Map([[shared, "y"], [{"id": 1}, "z"]]))).to.eql(false);
 		});
 
 		it("Should compare a self cycle with a two object cycle in both orders", () => {
