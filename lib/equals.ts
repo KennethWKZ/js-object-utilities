@@ -52,9 +52,33 @@ const compareObjects = (a: any, b: any, seen: Map<any, Set<any>>): boolean => {
 		});
 	}
 	if (a instanceof Map || b instanceof Map) {
-		return a instanceof Map && b instanceof Map && a.size === b.size && [...a].every(([key, value]) => b.has(key) && main(value, b.get(key), seen));
+		if (!(a instanceof Map && b instanceof Map) || a.size !== b.size) {
+			return false;
+		}
+		// An entry whose key both Maps hold matches that key's entry in `b` when the values are equal. Each other entry must match its own entry of `b` by key and value (keys can be objects that are equal without being the same object), so a matched entry is removed and can't match a second one.
+		const matchedKeys = new Set();
+		const rest = [...a].filter(([key, value]) => {
+			if (b.has(key) && main(value, b.get(key), seen)) {
+				matchedKeys.add(key);
+				return false;
+			}
+			return true;
+		});
+		const unmatched = [...b].filter(([bKey]) => !matchedKeys.has(bKey));
+		return rest.every(([key, value]) => {
+			const index = unmatched.findIndex(([bKey, bValue]) => main(key, bKey, seen) && main(value, bValue, seen));
+			if (index === -1) {
+				return false;
+			}
+			unmatched.splice(index, 1);
+			return true;
+		});
 	}
 	if (Array.isArray(a) !== Array.isArray(b)) {
+		return false;
+	}
+	// `Object.keys` leaves out `length` and holes, so arrays that differ only in trailing holes would otherwise compare equal.
+	if (Array.isArray(a) && a.length !== b.length) {
 		return false;
 	}
 
